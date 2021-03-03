@@ -1,16 +1,23 @@
 import faker from 'faker';
 import { Product, ProductData } from '.';
 import { Either } from '../../../shared';
-import { MoreThanZeroError, RequiredValueError, ShortTextError } from '../../errors';
+import {
+  MoreThanZeroError,
+  RequiredValueError,
+  ShortTextError,
+} from '../../errors';
 
 describe('#Product', () => {
   it('should return a error if does not provided correct values', () => {
-    let productOrError: Either<RequiredValueError | MoreThanZeroError | ShortTextError, Product>;
+    let productOrError: Either<
+      RequiredValueError | MoreThanZeroError | ShortTextError,
+      Product
+    >;
 
     productOrError = Product.create({
       name: '',
       quantity: faker.random.number({ min: 1 }),
-      price: faker.random.number({ min: 1 })
+      price: faker.random.number({ min: 1 }),
     });
 
     expect(productOrError.isLeft()).toEqual(true);
@@ -20,7 +27,7 @@ describe('#Product', () => {
     productOrError = Product.create({
       name: 'ab',
       quantity: faker.random.number({ min: 1 }),
-      price: faker.random.number({ min: 1 })
+      price: faker.random.number({ min: 1 }),
     });
 
     expect(productOrError.isLeft()).toEqual(true);
@@ -30,7 +37,7 @@ describe('#Product', () => {
     productOrError = Product.create({
       name: faker.name.findName(),
       quantity: 0,
-      price: faker.random.number({ min: 1 })
+      price: faker.random.number({ min: 1 }),
     });
 
     expect(productOrError.isLeft()).toEqual(true);
@@ -40,7 +47,7 @@ describe('#Product', () => {
     productOrError = Product.create({
       name: faker.name.findName(),
       quantity: faker.random.number({ min: 1 }),
-      price: 0
+      price: 0,
     });
 
     expect(productOrError.isLeft()).toEqual(true);
@@ -52,7 +59,7 @@ describe('#Product', () => {
     const productData: ProductData = {
       name: faker.name.findName(),
       quantity: faker.random.number({ min: 1 }),
-      price: faker.random.number({ min: 1 })
+      price: faker.random.number({ min: 1 }),
     };
 
     const productOrError = Product.create(productData);

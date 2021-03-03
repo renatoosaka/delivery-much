@@ -2,7 +2,6 @@ import faker from 'faker';
 import { ProductData } from '../../domain/entities/products';
 import { left } from '../../shared';
 import { RequiredFieldError } from '../errors';
-import { ProductNotFoundError } from '../errors/product-not-found-error';
 import { ShowProduct } from '../protocols/show-product-protocol';
 import { FindProductByName } from '../protocols/product-repository';
 import { ShowProductUseCase } from './show-product-usecase';
