@@ -36,7 +36,7 @@ export class OrderMongoRepository implements AddOrder {
       );
 
       return {
-        name: product.name,
+        name: product?.name ?? '',
         quantity: item.quantity,
         price: item.quantity * item.price,
       };
