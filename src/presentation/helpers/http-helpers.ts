@@ -1,19 +1,9 @@
-import { UnauthorizedError, ServerError } from '../errors';
+import { ServerError } from '../errors';
 
 import { HTTPResponse } from '../protocols/http-protocol';
 
 export const badRequest = (error: Error): HTTPResponse => ({
   status_code: 400,
-  body: error,
-});
-
-export const unauthorized = (): HTTPResponse => ({
-  status_code: 401,
-  body: new UnauthorizedError(),
-});
-
-export const forbidden = (error: Error): HTTPResponse => ({
-  status_code: 403,
   body: error,
 });
 
