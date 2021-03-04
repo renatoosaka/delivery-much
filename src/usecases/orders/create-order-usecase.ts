@@ -1,14 +1,15 @@
-import { Order } from '../../domain/entities/orders';
-import { ProductData } from '../../domain/entities/products';
-import { ProductNotFoundError } from '../../domain/errors/product-notfound-error';
 import { left, right } from '../../shared';
+import { OrderQuantityError } from '../errors';
+import { Order } from '../../domain/entities/orders';
+import { AddOrder } from '../protocols/order-repository';
+import { ProductData } from '../../domain/entities/products';
+import { FindProductByName } from '../protocols/product-repository';
+import { ProductNotFoundError } from '../../domain/errors/product-notfound-error';
 import {
   CreateOrder,
   CreateOrderDTO,
   CreateOrderResponse,
 } from '../protocols/create-order-protocol';
-import { AddOrder } from '../protocols/order-repository';
-import { FindProductByName } from '../protocols/product-repository';
 
 export class CreateOrderUseCase implements CreateOrder {
   constructor(
@@ -26,6 +27,10 @@ export class CreateOrderUseCase implements CreateOrder {
 
       if (!found) {
         return left(new ProductNotFoundError(product.name));
+      }
+
+      if (found.quantity < product.quantity) {
+        return left(new OrderQuantityError(product.name));
       }
 
       founded_products.push({ ...product, price: found.price, id: found.id });

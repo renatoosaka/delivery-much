@@ -14,8 +14,10 @@ import {
   CreateOrderDTO,
 } from '../protocols/create-order-protocol';
 import { ProductNotFoundError } from '../../domain/errors/product-notfound-error';
+import { OrderQuantityError } from '../errors';
 
 const DEFAULT_PRODUCT_PRICE = 1;
+const DEFAULT_PRODUCT_QUANTITY = 1;
 
 interface SutTypes {
   sut: CreateOrder;
@@ -55,7 +57,7 @@ const makeFindProductByNameStub = (): FindProductByName => {
         name,
         id: faker.random.uuid(),
         price: faker.random.number({ min: 1 }),
-        quantity: faker.random.number({ min: 1 }),
+        quantity: DEFAULT_PRODUCT_QUANTITY,
       };
     }
   }
@@ -75,11 +77,11 @@ const makeValidRequest = (): CreateOrderDTO => ({
   products: [
     {
       name: faker.name.findName(),
-      quantity: faker.random.number({ min: 1 }),
+      quantity: DEFAULT_PRODUCT_QUANTITY,
     },
     {
       name: faker.name.findName(),
-      quantity: faker.random.number({ min: 1 }),
+      quantity: DEFAULT_PRODUCT_QUANTITY,
     },
   ],
 });
@@ -112,11 +114,11 @@ describe('#CreateOrderUseCase', () => {
           products: [
             {
               name,
-              quantity: faker.random.number({ min: 1 }),
+              quantity: DEFAULT_PRODUCT_QUANTITY,
             },
             {
               name,
-              quantity: faker.random.number({ min: 1 }),
+              quantity: DEFAULT_PRODUCT_QUANTITY,
             },
           ],
         },
@@ -156,6 +158,25 @@ describe('#CreateOrderUseCase', () => {
     expect(response.isLeft()).toBe(true);
     expect(response.value).toEqual(
       new ProductNotFoundError(requestData.products[0].name),
+    );
+  });
+
+  it('should return an error if product does not have enough quantity', async () => {
+    const { sut } = makeSut();
+
+    const requestData = {
+      products: [
+        {
+          name: faker.name.findName(),
+          quantity: DEFAULT_PRODUCT_QUANTITY + 1,
+        },
+      ],
+    };
+    const response = await sut.create(requestData);
+
+    expect(response.isLeft()).toBe(true);
+    expect(response.value).toEqual(
+      new OrderQuantityError(requestData.products[0].name),
     );
   });
 

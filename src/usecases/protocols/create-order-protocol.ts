@@ -1,11 +1,12 @@
 import { Either } from '../../shared';
+import { OrderQuantityError } from '../errors';
 import { OrderData } from '../../domain/entities/orders';
+import { ProductNotFoundError } from '../../domain/errors/product-notfound-error';
 import {
   DuplicatedProductsError,
   MoreThanZeroError,
   RequiredValueError,
 } from '../../domain/errors';
-import { ProductNotFoundError } from '../../domain/errors/product-notfound-error';
 
 export interface ProductOrder {
   name: string;
@@ -20,7 +21,8 @@ export type CreateOrderResponse = Either<
   | RequiredValueError
   | MoreThanZeroError
   | DuplicatedProductsError
-  | ProductNotFoundError,
+  | ProductNotFoundError
+  | OrderQuantityError,
   OrderData
 >;
 
