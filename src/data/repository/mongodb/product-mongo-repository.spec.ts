@@ -36,7 +36,7 @@ describe('#ProductMongoRepository', () => {
     expect(product.quantity).toEqual(createDataDTO.quantity);
   });
 
-  it('should return a product with existing email', async () => {
+  it('should return a product with existing name', async () => {
     const sut = makeSut();
 
     const createDataDTO = makeValidCreateData();
@@ -50,5 +50,49 @@ describe('#ProductMongoRepository', () => {
     expect(product?.name).toEqual(createDataDTO.name);
     expect(product?.price).toEqual(createDataDTO.price);
     expect(product?.quantity).toEqual(createDataDTO.quantity);
+  });
+
+  it('should increase product quantity', async () => {
+    const sut = makeSut();
+
+    const createDataDTO = makeValidCreateData();
+
+    await sut.add(createDataDTO);
+
+    const product = await sut.find(createDataDTO.name);
+
+    expect(product).toBeTruthy();
+    expect(product?.id).toBeTruthy();
+    expect(product?.quantity).toEqual(createDataDTO.quantity);
+
+    await sut.updateQuantity(product?.id as string, 1, 'increase');
+
+    const updated_product = await sut.find(createDataDTO.name);
+
+    expect(updated_product).toBeTruthy();
+    expect(updated_product?.id).toEqual(product?.id);
+    expect(updated_product?.quantity).toEqual(createDataDTO.quantity + 1);
+  });
+
+  it('should decrease product quantity', async () => {
+    const sut = makeSut();
+
+    const createDataDTO = makeValidCreateData();
+
+    await sut.add(createDataDTO);
+
+    const product = await sut.find(createDataDTO.name);
+
+    expect(product).toBeTruthy();
+    expect(product?.id).toBeTruthy();
+    expect(product?.quantity).toEqual(createDataDTO.quantity);
+
+    await sut.updateQuantity(product?.id as string, 1, 'decrease');
+
+    const updated_product = await sut.find(createDataDTO.name);
+
+    expect(updated_product).toBeTruthy();
+    expect(updated_product?.id).toEqual(product?.id);
+    expect(updated_product?.quantity).toEqual(createDataDTO.quantity - 1);
   });
 });

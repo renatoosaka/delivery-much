@@ -3,7 +3,10 @@ import { OrderQuantityError } from '../errors';
 import { Order } from '../../domain/entities/orders';
 import { AddOrder } from '../protocols/order-repository';
 import { ProductData } from '../../domain/entities/products';
-import { FindProductByName } from '../protocols/product-repository';
+import {
+  FindProductByName,
+  ProductRepository,
+} from '../protocols/product-repository';
 import { ProductNotFoundError } from '../../domain/errors/product-notfound-error';
 import {
   CreateOrder,
@@ -13,7 +16,7 @@ import {
 
 export class CreateOrderUseCase implements CreateOrder {
   constructor(
-    private readonly findProduct: FindProductByName,
+    private readonly productRepository: ProductRepository,
     private readonly addOrder: AddOrder,
   ) {}
 
@@ -23,7 +26,7 @@ export class CreateOrderUseCase implements CreateOrder {
     const founded_products: ProductData[] = [];
 
     for await (const product of products) {
-      const found = await this.findProduct.find(product.name);
+      const found = await this.productRepository.find(product.name);
 
       if (!found) {
         return left(new ProductNotFoundError(product.name));
@@ -49,6 +52,14 @@ export class CreateOrderUseCase implements CreateOrder {
         quantity: product.quantity,
       })),
     });
+
+    for await (const product of founded_products) {
+      await this.productRepository.updateQuantity(
+        product.id as string,
+        product.quantity,
+        'decrease',
+      );
+    }
 
     return right(order_created);
   }

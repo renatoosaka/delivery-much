@@ -2,7 +2,10 @@ import faker from 'faker';
 import { OrderData } from '../../domain/entities/orders';
 import { CreateOrderUseCase } from './create-order-usecase';
 import { ProductData } from '../../domain/entities/products';
-import { FindProductByName } from '../protocols/product-repository';
+import {
+  AddProductDTO,
+  ProductRepository,
+} from '../protocols/product-repository';
 import { AddOrder, AddOrderDTO } from '../protocols/order-repository';
 import {
   DuplicatedProductsError,
@@ -22,7 +25,7 @@ const DEFAULT_PRODUCT_QUANTITY = 1;
 interface SutTypes {
   sut: CreateOrder;
   addOrderStub: AddOrder;
-  findProductStub: FindProductByName;
+  productRepositoryStub: ProductRepository;
 }
 
 const makeAddOrderStub = (): AddOrder => {
@@ -50,27 +53,44 @@ const makeAddOrderStub = (): AddOrder => {
   return new AddOrderStub();
 };
 
-const makeFindProductByNameStub = (): FindProductByName => {
-  class FindProductByNameStub implements FindProductByName {
+const PRODUCT_ID = faker.random.uuid();
+
+const makeProductRepositoryStub = (): ProductRepository => {
+  class ProductRepositoryStub implements ProductRepository {
+    async add(data: AddProductDTO): Promise<ProductData> {
+      return {
+        ...data,
+        id: faker.random.uuid(),
+      };
+    }
+
     async find(name: string): Promise<ProductData | undefined> {
       return {
         name,
-        id: faker.random.uuid(),
+        id: PRODUCT_ID,
         price: faker.random.number({ min: 1 }),
         quantity: DEFAULT_PRODUCT_QUANTITY,
       };
     }
+
+    async updateQuantity(
+      id: string,
+      quantity: number,
+      operation: 'increase' | 'decrease',
+    ): Promise<void> {
+      console.log(id, quantity, operation);
+    }
   }
 
-  return new FindProductByNameStub();
+  return new ProductRepositoryStub();
 };
 
 const makeSut = (): SutTypes => {
   const addOrderStub = makeAddOrderStub();
-  const findProductStub = makeFindProductByNameStub();
-  const sut = new CreateOrderUseCase(findProductStub, addOrderStub);
+  const productRepositoryStub = makeProductRepositoryStub();
+  const sut = new CreateOrderUseCase(productRepositoryStub, addOrderStub);
 
-  return { sut, findProductStub, addOrderStub };
+  return { sut, addOrderStub, productRepositoryStub };
 };
 
 const makeValidRequest = (): CreateOrderDTO => ({
@@ -137,9 +157,9 @@ describe('#CreateOrderUseCase', () => {
   });
 
   it('should call findProduct with correct value', async () => {
-    const { sut, findProductStub } = makeSut();
+    const { sut, productRepositoryStub } = makeSut();
 
-    const findSpy = jest.spyOn(findProductStub, 'find');
+    const findSpy = jest.spyOn(productRepositoryStub, 'find');
 
     const requestData = makeValidRequest();
     await sut.create(requestData);
@@ -147,10 +167,28 @@ describe('#CreateOrderUseCase', () => {
     expect(findSpy).toHaveBeenCalledWith(requestData.products[0].name);
   });
 
-  it('should return an error if product not found', async () => {
-    const { sut, findProductStub } = makeSut();
+  it('should call updateQuantity with correct value', async () => {
+    const { sut, productRepositoryStub } = makeSut();
 
-    jest.spyOn(findProductStub, 'find').mockResolvedValueOnce(undefined);
+    const updateQuantitySpy = jest.spyOn(
+      productRepositoryStub,
+      'updateQuantity',
+    );
+
+    const requestData = makeValidRequest();
+    await sut.create(requestData);
+
+    expect(updateQuantitySpy).toHaveBeenCalledWith(
+      PRODUCT_ID,
+      requestData.products[0].quantity,
+      'decrease',
+    );
+  });
+
+  it('should return an error if product not found', async () => {
+    const { sut, productRepositoryStub } = makeSut();
+
+    jest.spyOn(productRepositoryStub, 'find').mockResolvedValueOnce(undefined);
 
     const requestData = makeValidRequest();
     const response = await sut.create(requestData);
@@ -181,7 +219,7 @@ describe('#CreateOrderUseCase', () => {
   });
 
   it('should call AddOrder with correct value', async () => {
-    const { sut, addOrderStub, findProductStub } = makeSut();
+    const { sut, addOrderStub, productRepositoryStub } = makeSut();
 
     const addSpy = jest.spyOn(addOrderStub, 'add');
 
@@ -192,7 +230,9 @@ describe('#CreateOrderUseCase', () => {
       quantity: faker.random.number({ min: 1 }),
     };
 
-    jest.spyOn(findProductStub, 'find').mockResolvedValueOnce(requestData);
+    jest
+      .spyOn(productRepositoryStub, 'find')
+      .mockResolvedValueOnce(requestData);
 
     await sut.create({
       products: [
@@ -215,13 +255,21 @@ describe('#CreateOrderUseCase', () => {
   });
 
   it('should throws an error if any dependency throw', async () => {
-    const { sut, addOrderStub, findProductStub } = makeSut();
+    const { sut, addOrderStub, productRepositoryStub } = makeSut();
 
     jest.spyOn(addOrderStub, 'add').mockRejectedValueOnce(new Error());
 
     await expect(sut.create(makeValidRequest())).rejects.toThrow();
 
-    jest.spyOn(findProductStub, 'find').mockRejectedValueOnce(new Error());
+    jest
+      .spyOn(productRepositoryStub, 'find')
+      .mockRejectedValueOnce(new Error());
+
+    await expect(sut.create(makeValidRequest())).rejects.toThrow();
+
+    jest
+      .spyOn(productRepositoryStub, 'updateQuantity')
+      .mockRejectedValueOnce(new Error());
 
     await expect(sut.create(makeValidRequest())).rejects.toThrow();
   });

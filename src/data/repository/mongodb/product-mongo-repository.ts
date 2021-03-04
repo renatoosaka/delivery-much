@@ -4,9 +4,28 @@ import {
   AddProduct,
   AddProductDTO,
   FindProductByName,
+  UpdateProductQuantity,
 } from '../../../usecases/protocols/product-repository';
 
-export class ProductMongoRepository implements AddProduct, FindProductByName {
+export class ProductMongoRepository
+  implements AddProduct, FindProductByName, UpdateProductQuantity {
+  async updateQuantity(
+    id: string,
+    quantity: number,
+    operation: 'increase' | 'decrease',
+  ): Promise<void> {
+    const collection = await MongoDB.getCollection('products');
+
+    await collection.findOneAndUpdate(
+      {
+        _id: id,
+      },
+      {
+        $inc: { quantity: operation === 'increase' ? quantity : -quantity },
+      },
+    );
+  }
+
   async find(name: string): Promise<ProductData | undefined> {
     const collection = await MongoDB.getCollection('products');
     const product = await collection.findOne({ name });
