@@ -45,4 +45,7 @@ export const OrderMapper = {
       total,
     };
   },
+  mapArray(data: OrderMapperDTO[]): OrderData[] {
+    return data.map(item => this.map(item));
+  },
 };

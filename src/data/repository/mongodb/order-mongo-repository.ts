@@ -5,10 +5,31 @@ import { OrderData } from '../../../domain/entities/orders';
 import {
   AddOrder,
   AddOrderDTO,
+  AllOrders,
   FindOrderById,
 } from '../../../usecases/protocols/order-repository';
 
-export class OrderMongoRepository implements AddOrder, FindOrderById {
+export class OrderMongoRepository
+  implements AddOrder, FindOrderById, AllOrders {
+  async all(): Promise<OrderData[]> {
+    const collection = await MongoDB.getCollection('orders');
+
+    const order = await collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'products.id',
+            foreignField: '_id',
+            as: 'products_info',
+          },
+        },
+      ])
+      .toArray();
+
+    return OrderMapper.mapArray(order);
+  }
+
   async find(id: string): Promise<OrderData | undefined> {
     const collection = await MongoDB.getCollection('orders');
 
