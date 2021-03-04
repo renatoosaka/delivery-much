@@ -36,7 +36,7 @@ describe('#ProductMongoRepository', () => {
     expect(product.quantity).toEqual(createDataDTO.quantity);
   });
 
-  it('should return a user with existing email', async () => {
+  it('should return a product with existing email', async () => {
     const sut = makeSut();
 
     const createDataDTO = makeValidCreateData();

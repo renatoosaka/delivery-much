@@ -1,6 +1,6 @@
 import { Express, Router } from 'express';
 import { createProductRoute, showProductRoute } from '../routes/products';
-import { createOrderRoute } from '../routes/orders';
+import { createOrderRoute, showOrderRoute } from '../routes/orders';
 
 export default (app: Express): void => {
   const router = Router();
@@ -17,4 +17,5 @@ export default (app: Express): void => {
   showProductRoute(router);
 
   createOrderRoute(router);
+  showOrderRoute(router);
 };

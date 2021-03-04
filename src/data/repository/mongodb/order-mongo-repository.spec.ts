@@ -56,4 +56,23 @@ describe('#OrderMongoRepository', () => {
     expect(order.products).toBeTruthy();
     expect(order.total).toEqual(product.price);
   });
+
+  it('should return a order with existing email', async () => {
+    const sut = makeSut();
+
+    const response = await sut.add({
+      products: [
+        {
+          id: product.id as string,
+          price: product.price,
+          quantity: 1,
+        },
+      ],
+    });
+
+    const order = await sut.find(response.id as string);
+
+    expect(order).toBeTruthy();
+    expect(order?.id).toEqual(response.id);
+  });
 });
