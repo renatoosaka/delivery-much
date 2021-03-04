@@ -17,7 +17,11 @@ const handleStream = new Transform({
 
     const collection = await MongoDB.getCollection('products');
 
-    await collection.insertOne(data);
+    await collection.insertOne({
+      ...data,
+      price: parseFloat(data.price),
+      quantity: Number(data.quantity),
+    });
 
     return cb(null, JSON.stringify(data));
   },

@@ -1,5 +1,9 @@
 import { Express, Router } from 'express';
-import { createProductRoute, showProductRoute } from '../routes/products';
+import {
+  createProductRoute,
+  showProductRoute,
+  updateProductStockRoute,
+} from '../routes/products';
 import {
   createOrderRoute,
   showOrderRoute,
@@ -19,6 +23,7 @@ export default (app: Express): void => {
 
   createProductRoute(router);
   showProductRoute(router);
+  updateProductStockRoute(router);
 
   createOrderRoute(router);
   showAllOrdersRoute(router);
