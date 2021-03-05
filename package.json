@@ -4,8 +4,10 @@
   "main": "index.js",
   "license": "UNLICENSED",
   "scripts": {
-    "seed": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules src/main/seed.ts",
+    "start": "node dist/src/main/server.js",
+    "prod:seed": "node dist/src/main/seed.js",
     "dev:server": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules src/main/server.ts",
+    "dev:seed": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules src/main/seed.ts",
     "test": "jest --passWithNoTests --silent --noStackTrace --runInBand",
     "test:verbose": "jest --passWithNoTests --runInBand",
     "test:unit": "yarn test --watch -c jest.unit.config.js",

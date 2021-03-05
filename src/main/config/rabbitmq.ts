@@ -51,7 +51,7 @@ export const rabbitMQ = (): void => {
 
               if (response.status_code === 200) {
                 console.log(
-                  " [x] %s: '%s'",
+                  "Executed - %s: '%s'",
                   msg?.fields.routingKey,
                   msg?.content.toString(),
                 );
