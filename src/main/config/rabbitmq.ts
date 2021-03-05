@@ -1,70 +1,74 @@
 import amqp from 'amqplib/callback_api';
+import env from './env';
 import { updateProductStockControllerFactory } from '../factories/products';
 
 export const rabbitMQ = (): void => {
-  amqp.connect('amqp://guest:guest@localhost', (errConn, conn) => {
-    if (errConn) {
-      console.error('Error on connecting RabbitMQ', errConn);
-      return;
-    }
-
-    const updateProductStockController = updateProductStockControllerFactory();
-    console.log('AMPQ Connected');
-
-    conn.createChannel((errChan, channel) => {
-      if (errChan) {
-        console.error('Error on create channel', errChan);
+  amqp.connect(
+    `amqp://${env.RABBIT_MQ_USER}:${env.RABBIT_MQ_PASS}@${env.RABBIT_MQ_HOST}`,
+    (errConn, conn) => {
+      if (errConn) {
+        console.error('Error on connecting RabbitMQ', errConn);
         return;
       }
 
-      channel.assertExchange('stock', 'direct', { durable: true });
+      const updateProductStockController = updateProductStockControllerFactory();
+      console.log('AMPQ Connected');
 
-      channel.assertQueue('', { exclusive: true }, (errQueue, q) => {
-        if (errQueue) {
-          console.error('Error on asserting queue', errQueue);
+      conn.createChannel((errChan, channel) => {
+        if (errChan) {
+          console.error('Error on create channel', errChan);
           return;
         }
 
-        channel.bindQueue(q.queue, 'stock', 'incremented');
-        channel.bindQueue(q.queue, 'stock', 'decremented');
+        channel.assertExchange('stock', 'direct', { durable: true });
 
-        channel.consume(
-          q.queue,
-          async msg => {
-            if (msg) {
-              const name = msg?.content.toString();
-              const operation =
-                msg?.fields.routingKey === 'incremented'
-                  ? 'increase'
-                  : 'decrease';
-              const quantity = 1;
+        channel.assertQueue('', { exclusive: true }, (errQueue, q) => {
+          if (errQueue) {
+            console.error('Error on asserting queue', errQueue);
+            return;
+          }
 
-              const response = await updateProductStockController.handle({
-                params: {
-                  name,
-                },
-                body: {
-                  quantity,
-                  operation,
-                },
-              });
+          channel.bindQueue(q.queue, 'stock', 'incremented');
+          channel.bindQueue(q.queue, 'stock', 'decremented');
 
-              if (response.status_code === 200) {
-                console.log(
-                  "Executed - %s: '%s'",
-                  msg?.fields.routingKey,
-                  msg?.content.toString(),
-                );
+          channel.consume(
+            q.queue,
+            async msg => {
+              if (msg) {
+                const name = msg?.content.toString();
+                const operation =
+                  msg?.fields.routingKey === 'incremented'
+                    ? 'increase'
+                    : 'decrease';
+                const quantity = 1;
 
-                channel.ack(msg);
+                const response = await updateProductStockController.handle({
+                  params: {
+                    name,
+                  },
+                  body: {
+                    quantity,
+                    operation,
+                  },
+                });
+
+                if (response.status_code === 200) {
+                  console.log(
+                    "Executed - %s: '%s'",
+                    msg?.fields.routingKey,
+                    msg?.content.toString(),
+                  );
+
+                  channel.ack(msg);
+                }
               }
-            }
-          },
-          {
-            noAck: true,
-          },
-        );
+            },
+            {
+              noAck: true,
+            },
+          );
+        });
       });
-    });
-  });
+    },
+  );
 };
