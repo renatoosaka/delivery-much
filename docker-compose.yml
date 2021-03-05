@@ -7,6 +7,7 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+
   stock-service:
     image: deliverymuch/backend-challenge:stock-service
     networks:
@@ -18,6 +19,38 @@ services:
     links:
       - rabbitmq
     restart: on-failure
+
+  database:
+    image: mongo
+    container_name: delivery-database
+    restart: always
+    volumes:
+      - database-data:/data/db
+    networks:
+      - app-network
+    ports:
+      - 37017:27017
+
+  backend:
+    build:
+      context: .
+      dockerfile: dockerfile-backend
+    container_name: backend-app
+    ports:
+      - '5000:5000'
+    depends_on:
+      - database
+      - stock-service
+    networks:
+      - app-network
+    environment:
+      WAIT_HOSTS: database:27017
+      MONGO_URL: mongodb://database:27017/delivery-much
+      PORT: 5000
+
+volumes:
+  database-data:
+
 networks:
   app-network:
     driver: bridge

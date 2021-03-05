@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node dist/src/main/server.js",
     "prod:seed": "node dist/src/main/seed.js",
+    "build": "rimraf dist && yarn tsc",
+    "postbuild": "cp ./products.csv ./dist/products.csv",
     "dev:server": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules src/main/server.ts",
     "dev:seed": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules src/main/seed.ts",
     "test": "jest --passWithNoTests --silent --noStackTrace --runInBand",
